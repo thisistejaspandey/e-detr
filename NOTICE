@@ -1,0 +1,15 @@
+E-DETR
+Copyright 2026 The E-DETR Authors
+
+This product includes software derived from the following projects:
+
+- RT-DETR (https://github.com/lyuwenyu/RT-DETR), Copyright lyuwenyu,
+  licensed under the Apache License 2.0. The backbone (edetr/backbone.py), hybrid
+  encoder (edetr/encoder.py), decoder (edetr/decoder.py), contrastive denoising
+  (edetr/denoising.py) and shared ops (edetr/ops.py) are adapted from it.
+- YOLOv5 / timm model EMA (edetr/vlm/engine.py: ModelEMA), adapted via RT-DETR.
+- detectron2 (https://github.com/facebookresearch/detectron2), licensed under the
+  Apache License 2.0: Repeat Factor Sampling (edetr/data/lvis.py).
+
+VLM-EDETR uses OpenAI CLIP (https://github.com/openai/CLIP, MIT License) as an external
+dependency, and its prompt templates (edetr/vlm/model.py: PROMPT_TEMPLATES).

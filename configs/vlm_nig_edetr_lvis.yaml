@@ -1,0 +1,16 @@
+# VLM-NIG: freeze a trained VLM-EDETR and train only the NIG box-uncertainty head.
+defaults_from: vlm_edetr_lvis.yaml
+
+model:
+  nig: true
+  train_only: [nig_embed]
+
+criterion:
+  losses: [nig]
+  weight_dict: {loss_nig: 1.0}
+
+train:
+  output_dir: outputs/vlm_nig_edetr_lvis
+  init_weights: weights/vlm_edetr_lvis.pth
+  epochs: 12
+  kl_weight: 0.0
