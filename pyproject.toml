@@ -1,0 +1,92 @@
+[project]
+authors = [{name = "Tejas", email = "tejas.pandey@york.ac.uk"}]
+name = "edetr"
+requires-python = ">= 3.11, <3.13"
+version = "1.0.0"
+description = "E-DETR and VLM-EDETR: evidential classification heads for DETR detectors (reference code)."
+readme = "README.md"
+license = {text = "Apache-2.0"}
+
+dependencies = [
+    "torch>=2.1",
+    "torchvision>=0.16",
+    "numpy",
+    "scipy",
+    "pillow",
+    "accelerate>=1.0,<2",
+    "omegaconf>=2.3,<3",
+    "hotcoco>=0.4.0,<0.5",
+    "clip @ git+https://github.com/openai/CLIP.git",
+]
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["edetr"]
+
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.pypi-dependencies]
+torch = "==2.10.0"
+torchvision = "==0.25.0"
+edetr = { path = ".", editable = true }
+
+[tool.pixi.dependencies]
+python = "3.12.*"
+numpy = ">=1.26"
+scipy = ">=1.15.1,<2"
+pillow = ">=10"
+omegaconf = ">=2.3,<3"
+matplotlib = ">=3.7"
+jupyterlab = ">=4"
+pytest = ">=8.0.0,<9"
+ruff = ">=0.6.0"
+pyright = ">=1.1.380"
+
+
+[tool.pixi.tasks]
+# CLIP text embeddings for the LVIS classes: `pixi run text-embeddings <lvis_v1_val.json> <out.pt>`
+text-embeddings = "python tools/build_text_embeddings.py"
+# Train: `pixi run train configs/vlm_edetr_lvis.yaml [key=value ...]`. Multi-GPU:
+# `pixi run accelerate launch --num_processes 4 tools/train_vlm.py configs/vlm_edetr_lvis.yaml`
+train = "accelerate launch tools/train_vlm.py"
+# Inference + LVIS AP: `pixi run infer configs/vlm_edetr_lvis.yaml <ckpt> [--out dets.json]`
+infer = "python tools/infer_vlm.py"
+# Prompt demo (examples/vlm_edetr_demo.ipynb) in JupyterLab
+notebook = "jupyter lab examples/vlm_edetr_demo.ipynb"
+# E-DETR example: `pixi run quickstart --weights rtdetr_r50vd_6x_coco_from_paddle.pth [--nig]`
+quickstart = "python examples/edetr_quickstart.py"
+test = "pytest tests -q"
+lint = "ruff check edetr tools examples tests"
+format = "ruff format edetr tools examples tests"
+typecheck = "pyright"
+
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["."]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "SIM", "B", "UP"]
+ignore = ["B905"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["edetr"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+
+[tool.pyright]
+include = ["edetr/vlm/engine.py", "edetr/vlm/build.py", "edetr/data", "tools"]
+pythonVersion = "3.12"
+typeCheckingMode = "basic"

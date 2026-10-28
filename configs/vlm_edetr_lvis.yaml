@@ -1,0 +1,56 @@
+# VLM-EDETR on OV-LVIS (rare classes held out at train time)
+# Override any key on the command line, e.g. `train.batch_size=8 data.num_workers=4`.
+
+model:
+  clip_model_name: RN50
+  text_embeddings_path: weights/lvis_text_embeddings_rn50.pt  # tools/build_text_embeddings.py
+  logit_scale_init: 2.659
+  vlm_temperature: 0.01
+  batch_vocabulary: true
+  num_neg: 50
+  fuse_text_query: true
+  nig: false          # true -> VLM-NIG (adds the NIG box-uncertainty head)
+  train_only: null    # e.g. [nig_embed] to train only the NIG head
+
+criterion:
+  alpha: 0.75
+  gamma: 2.0
+  kl_mode: beta       
+  nig_reg_coeff: 1.0
+  losses: [evidential_vfl, boxes]
+  weight_dict: {loss_evidential_vfl: 1.0, loss_bbox: 5.0, loss_giou: 2.0}
+  matcher: {cost_class: 2.0, cost_bbox: 5.0, cost_giou: 2.0, alpha: 0.25, gamma: 2.0}
+
+postprocess:
+  num_top_queries: 300
+  score_type: uncertainty_weighted   # or expectation; uncertainty_weighted = uncertainty-guided fusion (exponent u = 2/S, ignores the alphas)
+  # F-VLM ensemble exponents: detector score ** (1 - a) * frozen-CLIP score ** a
+  base_alpha: 0.20
+  novel_alpha: 0.15   # novel = LVIS rare classes
+
+data:
+  img_root: data/coco                       # holds train2017/ and val2017/
+  train_ann: data/lvis/lvis_v1_train.json
+  val_ann: data/lvis/lvis_v1_val.json
+  exclude_frequencies: [r]                  # OV-LVIS: no rare-class supervision
+  repeat_thresh: 0.001
+  num_workers: 8
+  limit: null                               # cap images (smoke tests)
+
+train:
+  output_dir: outputs/vlm_edetr_lvis
+  init_weights: null      # checkpoint to start from (e.g. VLM-EDETR for VLM-NIG)
+  resume: null            # outputs/<run>/last.pth
+  seed: 0
+  epochs: 24
+  batch_size: 16          # total over GPUs
+  lr: 1.0e-4
+  weight_decay: 1.0e-4
+  warmup_steps: 2000
+  max_norm: 0.1
+  mixed_precision: bf16
+  ema_decay: 0.9999
+  ema_warmups: 2000
+  kl_weight: 1.0e-3       # evidential KL coefficient after annealing
+  kl_anneal_epochs: 10    # linear ramp from 0
+  eval_every: 4           # epochs; the final epoch is always evaluated
